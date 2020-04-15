@@ -15,7 +15,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import OneHotEncoder
 from numpy import argmax
 
-
+# In[] 
 '''convert_to_dt'''
 #source_path= "D:/USC/Lab/ChamSim/data/654.out"
 #f.convert_to_dt(source_path)
@@ -36,7 +36,7 @@ look_back = 3
 sequences = f.create_windowed_dataset(encoded_final, look_back)
 
 '''Training data preprocessing'''
-X, y = sequences[0:20000, :-1], sequences[0:20000, -1]
+X, y = sequences[40000:60000, :-1], sequences[40000:60000, -1]
 y = y.reshape(len(y), 1)
 
 '''binay'''
@@ -47,13 +47,25 @@ test_ratio=0.3
 X_train, X_test = train_test_split(X, test_size=test_ratio, shuffle=False)
 y_train, y_test = train_test_split(y_binay, test_size=test_ratio, shuffle=False)
 
-
+# In[] 
 from my_model import my_model
 '''train model'''
 embedding_dim=10
 i_dim=look_back
 o_dim=y_train.shape[1]
-batch_size=256
-num_epochs=10
-model_ = my_model(final_vocab_size, embedding_dim, i_dim, o_dim)
-model_.train(X_train, y_train,X_test, y_test, num_epochs, batch_size)
+batch_size=200
+num_epochs=5
+model_ = my_model(final_vocab_size,batch_size, embedding_dim, i_dim, o_dim)
+history=model_.train(X_train, y_train,X_test, y_test, num_epochs, batch_size)
+
+# In[] 
+
+y_pred = model_.predict(X_test,batch_size=batch_size)
+y_pred[y_pred >= 0.5] = 1
+y_pred[y_pred < 0.5] = 0
+aaaaa = np.packbits(np.array(y_test, dtype=np.bool).reshape(-1, 2, 8)[:, ::-1]).view(np.uint16)
+bbbbb = np.packbits(np.array(y_pred, dtype=np.bool).reshape(-1, 2, 8)[:, ::-1]).view(np.uint16)
+
+from sklearn.metrics import accuracy_score
+accuracy = accuracy_score(np.array(aaaaa), np.array(bbbbb))
+print(accuracy)

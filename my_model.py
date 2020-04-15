@@ -8,22 +8,26 @@ Created on Sun Apr 12 21:33:30 2020
 import os
 import numpy as np
 #from Evaluate import Evaluate
-from tensorflow.python.keras import backend as k
-from tensorflow.keras.models import Sequential, load_model
-from tensorflow.keras.layers import Dense, Embedding, Dropout, LSTM
-from tensorflow.keras.callbacks import CSVLogger, ModelCheckpoint
-from tensorflow.keras.layers import LSTM
-#from tensorflow.compat.v1.keras.layers import CuDNNLSTM
+
+from keras.models import Sequential, load_model
+from keras.layers import Dense, Embedding, Dropout, LSTM
+from keras.callbacks import CSVLogger, ModelCheckpoint
+from keras.layers import LSTM
+from tensorflow.compat.v1.keras.layers import CuDNNLSTM
+from keras.callbacks import EarlyStopping
 
 class my_model:
-    def __init__(self, vocab_size, embedding_dim, i_dim, o_dim):
+    def __init__(self, vocab_size, batch_size,embedding_dim, i_dim, o_dim):
         self.i_dim = i_dim
         self.o_dim = o_dim
 
         self.model = Sequential()
    #     self.model.add(Embedding(vocab_size, embedding_dim, input_length=i_dim))
-        self.model.add(Embedding(vocab_size, embedding_dim, input_length=i_dim))
-        self.model.add(LSTM(50))
+        self.model.add(Embedding(vocab_size, embedding_dim, input_length=i_dim,
+                       batch_input_shape=(batch_size,i_dim)))
+       # self.model.add(LSTM(50))
+       # (batch_size, timesteps, data_dim). 
+        self.model.add(LSTM(50,batch_input_shape=(batch_size,i_dim,embedding_dim),stateful=True))
        # self.model.add(CuDNNLSTM(50))
         self.model.add(Dropout(0.1))
         self.model.add(Dense(20,activation='sigmoid'))
@@ -35,12 +39,13 @@ class my_model:
         self.model.summary()
 
     def train(self,X_train, y_train, X_test, y_test, num_epochs, batch_size):
-        self.model.fit(X_train,
+        history =self.model.fit(X_train,
                 y_train,
                 epochs=num_epochs,
                 shuffle=False,
-                batch_size=batch_size)
-               # validation_data=(X_test, y_test))
+                batch_size=batch_size,
+                validation_data=(X_test, y_test))
+        return history
         
-    def predict(self,X):
-        return self.model.predict(np.asarray(X))
+    def predict(self,X,batch_size):
+        return self.model.predict(np.asarray(X),batch_size=batch_size)
