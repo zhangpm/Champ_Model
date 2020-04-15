@@ -21,7 +21,8 @@ from numpy import argmax
 #f.convert_to_dt(source_path)
 
 '''read_dt'''
-source_path= "dt.csv"
+source_path= "D:/USC/Lab/ChamSim/data/dt.csv"
+#source_path= "./dt.csv"
 dataset_dt = pd.read_csv(source_path, header=None, index_col=None)
 dataset_dt_ls=list(dataset_dt[0].astype(str))
 
@@ -35,17 +36,16 @@ look_back = 3
 sequences = f.create_windowed_dataset(encoded_final, look_back)
 
 '''Training data preprocessing'''
-X, y = sequences[0:50000, :-1], sequences[0:50000, -1]
-
-'''one hot'''
-onehot_encoder = OneHotEncoder(sparse=False)
+X, y = sequences[0:20000, :-1], sequences[0:20000, -1]
 y = y.reshape(len(y), 1)
-onehot_encoded = onehot_encoder.fit_transform(y)
-#print(onehot_encoded)
 
+'''binay'''
+y_binay=f.convert_to_binary(data=y)
+
+'''split'''
 test_ratio=0.3
-X_train, X_test = train_test_split(X, test_size=test_ratio, shuffle=True)
-y_train, y_test = train_test_split(onehot_encoded, test_size=test_ratio, shuffle=True)
+X_train, X_test = train_test_split(X, test_size=test_ratio, shuffle=False)
+y_train, y_test = train_test_split(y_binay, test_size=test_ratio, shuffle=False)
 
 
 from my_model import my_model
@@ -54,6 +54,6 @@ embedding_dim=10
 i_dim=look_back
 o_dim=y_train.shape[1]
 batch_size=256
-num_epochs=5
+num_epochs=10
 model_ = my_model(final_vocab_size, embedding_dim, i_dim, o_dim)
 model_.train(X_train, y_train,X_test, y_test, num_epochs, batch_size)

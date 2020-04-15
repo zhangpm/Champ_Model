@@ -11,24 +11,6 @@ import pandas as pd
 import numpy as np
 from keras.preprocessing.text import Tokenizer
 
-
-souce_path= "D:/USC/Lab/ChamSim/data/654.out"
-dataset = pd.read_csv(souce_path, header=None, index_col=None)
-dataset_ls=list(dataset[0].astype(str))
-'''conver to deltas'''
-#dataset_dt=dataset.diff()[1:]
-#dataset_dt.to_csv("dt.csv", index=None)
-
-#dataset_dt.apply(pd.value_counts)
-'''sample total lines'''
-#max_sample_size=dataset_dt.count()[0]
-
-'''tokenize'''
-tokenizer = Tokenizer()
-tokenizer.fit_on_texts(dataset_ls)
-encoded_final = tokenizer.texts_to_sequences([' '.join(dataset_ls)])[0]
-final_vocab_size = len(tokenizer.word_index) + 1
-
 def convert_to_dt(source_path):
     dataset = pd.read_csv(source_path, header=None, index_col=None)
 
@@ -58,4 +40,6 @@ def difference(dataset, interval=1):
         diff.append(value)
     return diff
 
-
+def convert_to_binary(data,bit_size=16):
+    data_binary = np.array([[int(d) for i in j for d in str('{0:016b}'.format(i))] for j in list(data)])
+    return data_binary     
