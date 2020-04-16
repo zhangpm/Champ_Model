@@ -42,4 +42,26 @@ def difference(dataset, interval=1):
 
 def convert_to_binary(data,bit_size=16):
     data_binary = np.array([[int(d) for i in j for d in str('{0:016b}'.format(i))] for j in list(data)])
-    return data_binary     
+    return data_binary    
+
+def convert_binary_to_dec(data,bit_size=16):
+    #return np.reshape(np.array(list([int("".join(str(i) for i in List),2) for List in data])),(-1,1))
+    dec = np.packbits(np.array(data, dtype=np.bool).reshape(-1, 2, 8)[:, ::-1]).view(np.uint16)
+    return dec
+    # return data_dec 
+
+def token_back(y_pred_dec,y_test_dec,tokenizer)  :
+    reverse_word_map = dict(map(reversed, tokenizer.word_index.items()))
+    def sequence_to_text(list_of_indices):
+    # Looking up words in dictionary
+        words = [reverse_word_map.get(letter) for letter in list_of_indices]
+        return(words)
+    dummy_word = "0xffffffff"    
+    original_testing_diffs = list(map(sequence_to_text, [y_pred_dec]))
+    original_predictions_diffs = list(map(sequence_to_text, [y_test_dec]))
+    tmp = [((-1 if int(k[0]) == 1 else 1)*int(k[2:]), (-1 if int(l[0]) == 1 else 1)*int(l[2:])) if l is not None and k is not None and l != dummy_word and k != dummy_word else (None, None) for k,l in zip(original_testing_diffs[0], original_predictions_diffs[0])]
+    original_testing_diffs, original_predictions_diffs = zip(*tmp)   
+    return list(original_testing_diffs), list(original_predictions_diffs)
+
+    
+    

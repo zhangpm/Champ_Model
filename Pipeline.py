@@ -24,19 +24,21 @@ from numpy import argmax
 source_path= "D:/USC/Lab/ChamSim/data/dt.csv"
 #source_path= "./dt.csv"
 dataset_dt = pd.read_csv(source_path, header=None, index_col=None)
-dataset_dt_ls=list(dataset_dt[0].astype(str))
+dataset_dt_ls=list(dataset_dt[0])[0:600000]
+
+dataset_dt_ls_x = ["%s%d" % ("1x" if x < 0 else "0x", abs(x)) for x in dataset_dt_ls]
 
 '''tokenize'''
 tokenizer = Tokenizer()
-tokenizer.fit_on_texts(dataset_dt_ls)
-encoded_final = tokenizer.texts_to_sequences([' '.join(dataset_dt_ls)])[0]
+tokenizer.fit_on_texts(dataset_dt_ls_x)
+encoded_final = tokenizer.texts_to_sequences([' '.join(dataset_dt_ls_x)])[0]
 final_vocab_size = len(tokenizer.word_index) + 1
 '''input sequence window'''
 look_back = 5
 sequences = f.create_windowed_dataset(encoded_final, look_back)
 
 '''Training data preprocessing'''
-X, y = sequences[2000:10000, :-1], sequences[2000:10000, -1]
+X, y = sequences[:, :-1], sequences[:, -1]
 y = y.reshape(len(y), 1)
 
 '''binay'''
@@ -82,6 +84,7 @@ plt.plot(history.history['val_accuracy'], label='Validation accuray')
 plt.xlabel("Epoch")
 plt.legend(loc="best")
 # In[]
+'''
 y_pred = model_.predict(X_test)
 y_pred[y_pred >= 0.5] = 1
 y_pred[y_pred < 0.5] = 0
@@ -90,3 +93,37 @@ bbbbb = np.packbits(np.array(y_pred, dtype=np.bool).reshape(-1, 2, 8)[:, ::-1]).
 from sklearn.metrics import accuracy_score
 accuracy = accuracy_score(np.array(aaaaa), np.array(bbbbb))
 print(accuracy)
+'''
+# In[]
+#evaluate
+# need to save tokenizer
+
+#y_pred = model_.predict([[1,1,1,1,1]])
+#X_test=[[1,1,1]]
+y_pred = model_.predict(X_test)
+y_pred[y_pred >= 0.5] = 1
+y_pred[y_pred < 0.5] = 0
+aaaaa = f.convert_binary_to_dec(y_test)
+bbbbb = f.convert_binary_to_dec(y_pred)
+
+from sklearn.metrics import accuracy_score
+accuracy = accuracy_score(np.array(aaaaa), np.array(bbbbb))
+print("accuracy:",accuracy)
+
+#bbbbb = np.packbits(np.array(y_pred, dtype=np.bool).reshape(-1, 2, 8)[:, ::-1]).view(np.uint16)
+original_testing_diffs,original_predictions_diffs=f.token_back(aaaaa,bbbbb,tokenizer)
+
+#print(original_testing_diffs,original_predictions_diffs)
+
+# In[]
+# using the model
+
+X_test2=np.array([X_test[0]])
+y_pred1 = model_.predict(X_test2)
+y_pred1[y_pred1 >= 0.5] = 1
+y_pred1[y_pred1 < 0.5] = 0
+
+a1=[0]
+b1 = f.convert_binary_to_dec(y_pred1)
+diff,nomean=f.token_back(b1,b1,tokenizer)
+print(diff)
