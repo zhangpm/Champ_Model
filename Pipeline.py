@@ -32,40 +32,61 @@ tokenizer.fit_on_texts(dataset_dt_ls)
 encoded_final = tokenizer.texts_to_sequences([' '.join(dataset_dt_ls)])[0]
 final_vocab_size = len(tokenizer.word_index) + 1
 '''input sequence window'''
-look_back = 3
+look_back = 5
 sequences = f.create_windowed_dataset(encoded_final, look_back)
 
 '''Training data preprocessing'''
-X, y = sequences[40000:60000, :-1], sequences[40000:60000, -1]
+X, y = sequences[2000:10000, :-1], sequences[2000:10000, -1]
 y = y.reshape(len(y), 1)
 
 '''binay'''
 y_binay=f.convert_to_binary(data=y)
+print(X.shape,y.shape)
 
 '''split'''
-test_ratio=0.3
-X_train, X_test = train_test_split(X, test_size=test_ratio, shuffle=False)
-y_train, y_test = train_test_split(y_binay, test_size=test_ratio, shuffle=False)
+'''val'''
+test_ratio=0.2
+X_train0, X_test = train_test_split(X, test_size=test_ratio, shuffle=False)
+y_train0, y_test = train_test_split(y_binay, test_size=test_ratio, shuffle=False)
 
+'''test'''
+test_ratio=0.25
+X_train, X_val = train_test_split(X_train0, test_size=test_ratio, shuffle=False)
+y_train, y_val = train_test_split(y_train0, test_size=test_ratio, shuffle=False)
+
+print("X shape:",X_train.shape,X_val.shape,X_test.shape)
+print("y shape:",y_train.shape,y_val.shape,y_test.shape)
 # In[] 
 from my_model import my_model
 '''train model'''
+model_file_name='my_model.h5'
 embedding_dim=10
 i_dim=look_back
 o_dim=y_train.shape[1]
-batch_size=200
-num_epochs=5
-model_ = my_model(final_vocab_size,batch_size, embedding_dim, i_dim, o_dim)
-history=model_.train(X_train, y_train,X_test, y_test, num_epochs, batch_size)
-
+batch_size=256
+num_epochs=20
+model_ = my_model(final_vocab_size, batch_size,embedding_dim, i_dim, o_dim)
+history=model_.train(X_train, y_train,X_val, y_val, num_epochs, batch_size)
+model_.model.save(model_file_name)
 # In[] 
-
-y_pred = model_.predict(X_test,batch_size=batch_size)
+import matplotlib.pyplot as plt
+fig1 = plt.figure(dpi=50, figsize=(10, 6))
+plt.plot(history.history['loss'], label='Training loss')
+plt.plot(history.history['val_loss'], label='Validation loss')
+plt.xlabel("Epoch")
+#plt.ylabel("Training loss")
+plt.legend(loc="best")
+fig2 = plt.figure(dpi=50, figsize=(10, 6))
+plt.plot(history.history['accuracy'], label='Training accuracy')
+plt.plot(history.history['val_accuracy'], label='Validation accuray')
+plt.xlabel("Epoch")
+plt.legend(loc="best")
+# In[]
+y_pred = model_.predict(X_test)
 y_pred[y_pred >= 0.5] = 1
 y_pred[y_pred < 0.5] = 0
 aaaaa = np.packbits(np.array(y_test, dtype=np.bool).reshape(-1, 2, 8)[:, ::-1]).view(np.uint16)
 bbbbb = np.packbits(np.array(y_pred, dtype=np.bool).reshape(-1, 2, 8)[:, ::-1]).view(np.uint16)
-
 from sklearn.metrics import accuracy_score
 accuracy = accuracy_score(np.array(aaaaa), np.array(bbbbb))
 print(accuracy)
