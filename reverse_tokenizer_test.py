@@ -21,6 +21,7 @@ from tensorflow.keras.preprocessing.text import Tokenizer
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import OneHotEncoder
 from numpy import argmax
+import pickle
 
 # In[] 
 '''convert_to_dt'''

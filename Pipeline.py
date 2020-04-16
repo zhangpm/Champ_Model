@@ -14,6 +14,7 @@ from tensorflow.keras.preprocessing.text import Tokenizer
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import OneHotEncoder
 from numpy import argmax
+import pickle
 
 # In[] 
 '''convert_to_dt'''
@@ -33,6 +34,14 @@ tokenizer = Tokenizer()
 tokenizer.fit_on_texts(dataset_dt_ls_x)
 encoded_final = tokenizer.texts_to_sequences([' '.join(dataset_dt_ls_x)])[0]
 final_vocab_size = len(tokenizer.word_index) + 1
+# saving
+with open('tokenizer.pickle', 'wb') as handle:
+    pickle.dump(tokenizer, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+# loading
+with open('tokenizer.pickle', 'rb') as handle:
+    tokenizer = pickle.load(handle)
+    
 '''input sequence window'''
 look_back = 5
 sequences = f.create_windowed_dataset(encoded_final, look_back)
@@ -61,7 +70,7 @@ print("y shape:",y_train.shape,y_val.shape,y_test.shape)
 # In[] 
 from my_model import my_model
 '''train model'''
-model_file_name='my_model.h5'
+model_file_name='my_model2.h5'
 embedding_dim=10
 i_dim=look_back
 o_dim=y_train.shape[1]
